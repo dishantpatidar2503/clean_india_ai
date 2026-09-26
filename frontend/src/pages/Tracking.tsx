@@ -1,20 +1,15 @@
 import { useEffect, useState } from "react";
 import {
-  CheckCircle2,
-  Clock3,
-  MapPin,
-  Camera,
-  Truck,
-  ShieldCheck,
-  Loader2,
   AlertCircle,
+  Camera,
+  CheckCircle2,
+  Loader2,
+  MapPin,
+  ShieldCheck,
+  Truck,
 } from "lucide-react";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
-
-// Temporary testing report.
-// Later this will come from the logged-in citizen.
-const REPORT_ID = "RPT-E7D18B057D";
 
 type Report = {
   id: number;
@@ -36,18 +31,40 @@ function Tracking() {
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  // -------------------------------------------------------
+  // GET CURRENT REPORT ID
+  // -------------------------------------------------------
+
+  const getReportId = () => {
+    return localStorage.getItem("latestReportId");
+  };
 
   // -------------------------------------------------------
   // LOAD REPORT
   // -------------------------------------------------------
 
-  const loadReport = async () => {
+  const loadReport = async (
+    showLoader = false
+  ) => {
     try {
-      setLoading(true);
+      if (showLoader) {
+        setLoading(true);
+      }
+
       setErrorMessage("");
 
+      const reportId = getReportId();
+
+      if (!reportId) {
+        throw new Error(
+          "No report found. Please submit a dustbin report first."
+        );
+      }
+
       const response = await fetch(
-        `${API_BASE_URL}/reports/${REPORT_ID}`
+        `${API_BASE_URL}/reports/${reportId}`
       );
 
       const data = await response.json();
@@ -59,6 +76,8 @@ function Tracking() {
       }
 
       setReport(data);
+      setLastUpdated(new Date());
+
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -66,19 +85,35 @@ function Tracking() {
           : "Unable to load report."
       );
     } finally {
-      setLoading(false);
+      if (showLoader) {
+        setLoading(false);
+      }
     }
   };
 
+  // -------------------------------------------------------
+  // INITIAL LOAD + AUTO REFRESH
+  // -------------------------------------------------------
+
   useEffect(() => {
-    loadReport();
+    loadReport(true);
+
+    const interval = setInterval(() => {
+      loadReport(false);
+    }, 5000);
+
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
   // -------------------------------------------------------
   // PHOTO URL
   // -------------------------------------------------------
 
-  const getPhotoUrl = (path: string | null) => {
+  const getPhotoUrl = (
+    path: string | null
+  ) => {
     if (!path) {
       return "";
     }
@@ -90,31 +125,66 @@ function Tracking() {
   };
 
   // -------------------------------------------------------
-  // STATUS HELPERS
+  // STATUS ORDER
   // -------------------------------------------------------
 
-  const isCompleted = (
-    step: string
-  ) => {
+  const statusOrder = [
+    "PENDING",
+    "ACCEPTED",
+    "ASSIGNED",
+    "IN_PROGRESS",
+    "RESOLVED",
+  ];
+
+  const isCompleted = (status: string) => {
     if (!report) {
       return false;
     }
-
-    const statusOrder = [
-      "PENDING",
-      "ACCEPTED",
-      "ASSIGNED",
-      "IN_PROGRESS",
-      "RESOLVED",
-    ];
 
     const currentIndex =
       statusOrder.indexOf(report.status);
 
     const stepIndex =
-      statusOrder.indexOf(step);
+      statusOrder.indexOf(status);
+
+    if (currentIndex === -1 || stepIndex === -1) {
+      return false;
+    }
 
     return currentIndex >= stepIndex;
+  };
+
+  // -------------------------------------------------------
+  // CURRENT STATUS TEXT
+  // -------------------------------------------------------
+
+  const getStatusText = () => {
+    if (!report) {
+      return "";
+    }
+
+    switch (report.status) {
+      case "PENDING":
+        return "Waiting for Nagar Nigam review";
+
+      case "ACCEPTED":
+        return "Request accepted by Nagar Nigam";
+
+      case "ASSIGNED":
+        return "Cleaning team assigned";
+
+      case "IN_PROGRESS":
+        return "Cleaning is in progress";
+
+      case "RESOLVED":
+        return "Dustbin cleaned successfully";
+
+      case "REJECTED":
+        return "Report was rejected";
+
+      default:
+        return report.status;
+    }
   };
 
   // -------------------------------------------------------
@@ -129,6 +199,7 @@ function Tracking() {
             size={22}
             className="animate-spin text-green-600"
           />
+
           <span className="font-medium text-gray-600">
             Loading report...
           </span>
@@ -145,8 +216,10 @@ function Tracking() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f7faf7] px-6">
         <div className="w-full max-w-md rounded-2xl border border-red-200 bg-white p-6 shadow-sm">
+
           <div className="flex items-center gap-3 text-red-600">
             <AlertCircle size={22} />
+
             <h2 className="font-bold">
               Unable to load report
             </h2>
@@ -158,11 +231,12 @@ function Tracking() {
 
           <button
             type="button"
-            onClick={loadReport}
+            onClick={() => loadReport(true)}
             className="mt-5 w-full rounded-xl bg-green-600 py-3 font-semibold text-white hover:bg-green-700"
           >
             Try Again
           </button>
+
         </div>
       </div>
     );
@@ -192,7 +266,7 @@ function Tracking() {
 
       <main className="mx-auto max-w-4xl px-6 py-8">
 
-        {/* REPORT INFO */}
+        {/* REPORT HEADER */}
         <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
 
           <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
@@ -215,6 +289,8 @@ function Tracking() {
               className={`rounded-xl px-4 py-2 ${
                 report.status === "RESOLVED"
                   ? "bg-green-50"
+                  : report.status === "REJECTED"
+                  ? "bg-red-50"
                   : "bg-orange-50"
               }`}
             >
@@ -222,18 +298,43 @@ function Tracking() {
                 className={`text-sm font-semibold ${
                   report.status === "RESOLVED"
                     ? "text-green-600"
+                    : report.status === "REJECTED"
+                    ? "text-red-600"
                     : "text-orange-600"
                 }`}
               >
                 {report.status === "RESOLVED"
                   ? "Dustbin Available"
+                  : report.status === "REJECTED"
+                  ? "Report Rejected"
                   : "Dustbin Locked"}
               </span>
             </div>
 
           </div>
 
+          {/* CURRENT STATUS */}
+          <div className="mt-5 rounded-xl bg-green-50 p-4">
+
+            <p className="text-xs font-semibold uppercase tracking-wide text-green-600">
+              Current Status
+            </p>
+
+            <p className="mt-1 font-bold text-green-800">
+              {getStatusText()}
+            </p>
+
+            {lastUpdated && (
+              <p className="mt-1 text-xs text-green-600">
+                Last updated:{" "}
+                {lastUpdated.toLocaleTimeString()}
+              </p>
+            )}
+
+          </div>
+
         </section>
+
 
         {/* LOCATION */}
         <section className="mt-5 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
@@ -279,6 +380,7 @@ function Tracking() {
 
         </section>
 
+
         {/* PROGRESS */}
         <section className="mt-5 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
 
@@ -286,49 +388,49 @@ function Tracking() {
             Report Progress
           </h2>
 
-          <div className="mt-7 space-y-0">
+          <div className="mt-7">
 
-            {/* Submitted */}
+            {/* REPORT SUBMITTED */}
             <TimelineItem
               icon={Camera}
               title="Report Submitted"
-              description="Your dustbin photo has been submitted."
+              description="Your dustbin photo and report location were submitted."
               completed={isCompleted("PENDING")}
               last={false}
             />
 
-            {/* Accepted */}
+            {/* ACCEPTED */}
             <TimelineItem
               icon={ShieldCheck}
               title="Nagar Nigam Review"
-              description="Your report has been received by Nagar Nigam."
+              description="Your request is being processed by Nagar Nigam."
               completed={isCompleted("ACCEPTED")}
               last={false}
             />
 
-            {/* Team */}
+            {/* TEAM */}
             <TimelineItem
               icon={Truck}
               title="Team Assigned"
-              description="A cleaning team has been assigned."
+              description="A municipal cleaning team has been assigned."
               completed={isCompleted("ASSIGNED")}
               last={false}
             />
 
-            {/* Cleaning */}
+            {/* CLEANING */}
             <TimelineItem
-              icon={Clock3}
+              icon={Loader2}
               title="Cleaning in Progress"
-              description="The assigned team is working on the dustbin."
+              description="The assigned team is cleaning the dustbin."
               completed={isCompleted("IN_PROGRESS")}
               last={false}
             />
 
-            {/* Resolved */}
+            {/* RESOLVED */}
             <TimelineItem
               icon={CheckCircle2}
               title="Resolved"
-              description="The dustbin has been cleaned and confirmed."
+              description="The clean dustbin photo has been uploaded and the report is resolved."
               completed={isCompleted("RESOLVED")}
               last={true}
             />
@@ -336,6 +438,7 @@ function Tracking() {
           </div>
 
         </section>
+
 
         {/* PHOTOS */}
         <section className="mt-5 grid gap-5 md:grid-cols-2">
@@ -363,7 +466,7 @@ function Tracking() {
                   src={getPhotoUrl(
                     report.photo_path
                   )}
-                  alt="Citizen dustbin report"
+                  alt="Dustbin before cleaning"
                   className="h-56 w-full object-cover"
                 />
 
@@ -379,6 +482,7 @@ function Tracking() {
             </p>
 
           </div>
+
 
           {/* AFTER PHOTO */}
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
@@ -403,7 +507,7 @@ function Tracking() {
                   src={getPhotoUrl(
                     report.after_clean_photo_path
                   )}
-                  alt="Clean dustbin"
+                  alt="Dustbin after cleaning"
                   className="h-56 w-full object-cover"
                 />
 
@@ -422,7 +526,18 @@ function Tracking() {
 
         </section>
 
+
+        {/* AUTO UPDATE INFO */}
+        <div className="mt-5 text-center">
+
+          <p className="text-xs text-gray-400">
+            🔄 Status automatically updates every 5 seconds
+          </p>
+
+        </div>
+
       </main>
+
     </div>
   );
 }

@@ -5,25 +5,28 @@ from fastapi.staticfiles import StaticFiles
 from app import models
 from app.database import Base, engine
 
-from app.routes.dustbins import router as dustbin_router
+# =========================================================
+# ROUTERS
+# =========================================================
+
 from app.routes.users import router as user_router
+from app.routes.dustbins import router as dustbin_router
 from app.routes.teams import router as team_router
 from app.routes.reports import router as report_router
 from app.routes.leaderboard import router as leaderboard_router
 from app.routes.municipalities import router as municipality_router
-from app.routes.municipalities import router as municipality_router
 
 
-# ---------------------------------------------------------
+# =========================================================
 # CREATE DATABASE TABLES
-# ---------------------------------------------------------
+# =========================================================
 
 Base.metadata.create_all(bind=engine)
 
 
-# ---------------------------------------------------------
+# =========================================================
 # FASTAPI APP
-# ---------------------------------------------------------
+# =========================================================
 
 app = FastAPI(
     title="CleanCity AI Backend",
@@ -35,9 +38,9 @@ app = FastAPI(
 )
 
 
-# ---------------------------------------------------------
+# =========================================================
 # CORS
-# ---------------------------------------------------------
+# =========================================================
 
 app.add_middleware(
     CORSMiddleware,
@@ -51,9 +54,9 @@ app.add_middleware(
 )
 
 
-# ---------------------------------------------------------
+# =========================================================
 # STATIC UPLOADS
-# ---------------------------------------------------------
+# =========================================================
 
 app.mount(
     "/uploads",
@@ -62,22 +65,26 @@ app.mount(
 )
 
 
-# ---------------------------------------------------------
+# =========================================================
 # API ROUTES
-# ---------------------------------------------------------
+# =========================================================
 
-app.include_router(dustbin_router)
+# User routes FIRST
 app.include_router(user_router)
+
+# Dustbin routes SECOND
+app.include_router(dustbin_router)
+
+# Other routes
 app.include_router(team_router)
 app.include_router(report_router)
 app.include_router(leaderboard_router)
 app.include_router(municipality_router)
-app.include_router(municipality_router)
 
 
-# ---------------------------------------------------------
+# =========================================================
 # ROOT
-# ---------------------------------------------------------
+# =========================================================
 
 @app.get("/")
 def root():
@@ -87,9 +94,9 @@ def root():
     }
 
 
-# ---------------------------------------------------------
+# =========================================================
 # HEALTH CHECK
-# ---------------------------------------------------------
+# =========================================================
 
 @app.get("/health")
 def health_check():

@@ -39,12 +39,27 @@ class User(Base):
         index=True,
     )
 
-    # False = CITIZEN
-    # True  = MUNICIPAL_OFFICER
+    # Hashed password
+    password_hash: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+
+    # False = Citizen
+    # True = Municipal Officer
     is_municipal_officer: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
         nullable=False,
+    )
+
+    # Citizen = NULL
+    # Officer = Municipal Body ID
+    municipal_id: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("municipal_bodies.id"),
+        nullable=True,
+        index=True,
     )
 
     # Civic reward points
@@ -60,9 +75,17 @@ class User(Base):
         nullable=False,
     )
 
+    # Relationships
     reports = relationship(
         "Report",
         back_populates="citizen",
+        foreign_keys="Report.citizen_id",
+    )
+
+    municipal_body = relationship(
+        "MunicipalBody",
+        back_populates="officers",
+        foreign_keys=[municipal_id],
     )
 
 
@@ -84,7 +107,6 @@ class MunicipalBody(Base):
         nullable=False,
     )
 
-    # Municipal office location
     latitude: Mapped[float] = mapped_column(
         Float,
         nullable=False,
@@ -104,6 +126,12 @@ class MunicipalBody(Base):
     reports = relationship(
         "Report",
         back_populates="municipal_body",
+    )
+
+    officers = relationship(
+        "User",
+        back_populates="municipal_body",
+        foreign_keys="User.municipal_id",
     )
 
 
@@ -142,7 +170,6 @@ class Dustbin(Base):
         nullable=True,
     )
 
-    # AVAILABLE / LOCKED
     status: Mapped[str] = mapped_column(
         String(20),
         default="AVAILABLE",
@@ -196,7 +223,6 @@ class CollectionTeam(Base):
         nullable=True,
     )
 
-    # AVAILABLE / BUSY
     status: Mapped[str] = mapped_column(
         String(20),
         default="AVAILABLE",
@@ -235,63 +261,44 @@ class Report(Base):
         index=True,
     )
 
-    # -----------------------------------------------------
     # Dustbin
-    # -----------------------------------------------------
-
     dustbin_id: Mapped[int] = mapped_column(
         ForeignKey("dustbins.id"),
         nullable=False,
     )
 
-    # -----------------------------------------------------
     # Citizen
-    # -----------------------------------------------------
-
     citizen_id: Mapped[int] = mapped_column(
         ForeignKey("users.id"),
         nullable=False,
     )
 
-    # -----------------------------------------------------
-    # Municipal Body
-    # -----------------------------------------------------
-
+    # Automatically assigned municipality
     municipal_id: Mapped[int | None] = mapped_column(
         ForeignKey("municipal_bodies.id"),
         nullable=True,
         index=True,
     )
 
-    # -----------------------------------------------------
-    # Collection Team
-    # -----------------------------------------------------
-
+    # Collection team
     team_id: Mapped[int | None] = mapped_column(
         ForeignKey("collection_teams.id"),
         nullable=True,
     )
 
-    # -----------------------------------------------------
-    # Photos
-    # -----------------------------------------------------
-
-    # Citizen uploaded photo
+    # Before-cleaning photo
     photo_path: Mapped[str] = mapped_column(
         String(500),
         nullable=False,
     )
 
-    # Photo uploaded after cleaning
+    # After-cleaning photo
     after_clean_photo_path: Mapped[str | None] = mapped_column(
         String(500),
         nullable=True,
     )
 
-    # -----------------------------------------------------
-    # One-time report location
-    # -----------------------------------------------------
-
+    # GPS
     latitude: Mapped[float] = mapped_column(
         Float,
         nullable=False,
@@ -302,27 +309,14 @@ class Report(Base):
         nullable=False,
     )
 
-    # -----------------------------------------------------
-    # Report status
-    # -----------------------------------------------------
-
-    # PENDING
-    # ACCEPTED
-    # ASSIGNED
-    # IN_PROGRESS
-    # RESOLVED
-    # REJECTED
-
+    # Status
     status: Mapped[str] = mapped_column(
         String(30),
         default="PENDING",
         nullable=False,
     )
 
-    # -----------------------------------------------------
-    # AI fields
-    # -----------------------------------------------------
-
+    # AI
     ai_summary: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,
@@ -333,10 +327,7 @@ class Report(Base):
         nullable=True,
     )
 
-    # -----------------------------------------------------
     # Timestamps
-    # -----------------------------------------------------
-
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,
@@ -353,13 +344,11 @@ class Report(Base):
         nullable=True,
     )
 
-    # =====================================================
-    # RELATIONSHIPS
-    # =====================================================
-
+    # Relationships
     citizen = relationship(
         "User",
         back_populates="reports",
+        foreign_keys=[citizen_id],
     )
 
     dustbin = relationship(

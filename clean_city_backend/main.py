@@ -1,46 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 
-from app import models
-from app.database import Base, engine
-
-# =========================================================
-# ROUTERS
-# =========================================================
-
+from app.routes.reports import router as reports_router
 from app.routes.users import router as user_router
-from app.routes.dustbins import router as dustbin_router
-from app.routes.teams import router as team_router
-from app.routes.reports import router as report_router
-from app.routes.leaderboard import router as leaderboard_router
-from app.routes.municipalities import router as municipality_router
 
-
-# =========================================================
-# CREATE DATABASE TABLES
-# =========================================================
-
-Base.metadata.create_all(bind=engine)
-
-
-# =========================================================
-# FASTAPI APP
-# =========================================================
 
 app = FastAPI(
     title="CleanCity AI Backend",
-    description=(
-        "AI-based sensor-less waste reporting and "
-        "municipal waste management system"
-    ),
+    description="AI-Based Sensor-less Predictive Waste Management System",
     version="1.0.0",
 )
 
-
-# =========================================================
-# CORS
-# =========================================================
 
 app.add_middleware(
     CORSMiddleware,
@@ -54,52 +24,19 @@ app.add_middleware(
 )
 
 
-# =========================================================
-# STATIC UPLOADS
-# =========================================================
-
-app.mount(
-    "/uploads",
-    StaticFiles(directory="uploads"),
-    name="uploads",
-)
-
-
-# =========================================================
-# API ROUTES
-# =========================================================
-
-# User routes FIRST
+app.include_router(reports_router)
 app.include_router(user_router)
 
-# Dustbin routes SECOND
-app.include_router(dustbin_router)
-
-# Other routes
-app.include_router(team_router)
-app.include_router(report_router)
-app.include_router(leaderboard_router)
-app.include_router(municipality_router)
-
-
-# =========================================================
-# ROOT
-# =========================================================
 
 @app.get("/")
 def root():
     return {
-        "message": "CleanCity AI Backend is running",
-        "status": "success",
+        "message": "CleanCity AI Backend is running!"
     }
 
 
-# =========================================================
-# HEALTH CHECK
-# =========================================================
-
 @app.get("/health")
-def health_check():
+def health():
     return {
-        "status": "healthy",
+        "status": "healthy"
     }

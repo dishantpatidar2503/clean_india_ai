@@ -1,180 +1,69 @@
 import { useState } from "react";
-import type { FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { User, Mail, Lock, ArrowLeft, LogIn } from "lucide-react";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
-function CitizenLogin() {
+export default function CitizenLogin() {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
 
     setError("");
-    setLoading(true);
+
+    if (!email || !password) {
+      setError("Please enter email and password.");
+      return;
+    }
 
     try {
-      const cleanEmail = email.trim().toLowerCase();
+      setLoading(true);
 
-      // -----------------------------
-      // VALIDATION
-      // -----------------------------
-      if (!cleanEmail || !password) {
-        setError("Please enter email and password.");
-        setLoading(false);
-        return;
-      }
+      const formData = new FormData();
 
-      // -----------------------------
-      // FORM DATA
-      // -----------------------------
-      const body = new URLSearchParams();
+      formData.append("email", email);
+      formData.append("password", password);
 
-      body.append("email", cleanEmail);
-      body.append("password", password);
-
-      console.log("=================================");
-      console.log("CITIZEN LOGIN");
-      console.log("Email:", cleanEmail);
-      console.log("Password length:", password.length);
-      console.log("=================================");
-
-      // -----------------------------
-      // API REQUEST
-      // -----------------------------
       const response = await fetch(
         `${API_BASE_URL}/users/citizen-login`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: body.toString(),
+          body: formData,
         }
       );
 
-      // -----------------------------
-      // READ RESPONSE
-      // -----------------------------
-      let data: any = null;
+      const data = await response.json();
 
-      try {
-        data = await response.json();
-      } catch {
-        data = {
-          detail: "Server returned an invalid response.",
-        };
-      }
-
-      console.log("Backend status:", response.status);
-      console.log("Backend response:", data);
-
-      // -----------------------------
-      // API ERROR
-      // -----------------------------
       if (!response.ok) {
-        throw new Error(
-          data?.detail ||
-            data?.message ||
-            `Login failed (${response.status})`
-        );
+        throw new Error(data.detail || "Login failed.");
       }
 
-      // -----------------------------
-      // CHECK ACCESS TOKEN
-      // -----------------------------
-      if (!data?.access_token) {
-        throw new Error(
-          "Login successful, but access token was not received."
-        );
+      // Save login information
+      if (data.access_token) {
+        localStorage.setItem("accessToken", data.access_token);
       }
 
-      // -----------------------------
-      // CHECK USER
-      // -----------------------------
-      if (!data?.user?.id) {
-        throw new Error(
-          "Login successful, but user information was not received."
-        );
+      if (data.user_id) {
+        localStorage.setItem("userId", String(data.user_id));
       }
 
-      // -----------------------------
-      // SAVE LOGIN DATA
-      // -----------------------------
-      localStorage.setItem(
-        "accessToken",
-        data.access_token
-      );
+      localStorage.setItem("userRole", "CITIZEN");
 
-      localStorage.setItem(
-        "userRole",
-        "CITIZEN"
-      );
-
-      localStorage.setItem(
-        "userId",
-        String(data.user.id)
-      );
-
-      localStorage.setItem(
-        "userName",
-        data.user.name || ""
-      );
-
-      localStorage.setItem(
-        "userEmail",
-        data.user.email || cleanEmail
-      );
-
-      localStorage.setItem(
-        "userPoints",
-        String(data.user.total_points ?? 0)
-      );
-
-      // -----------------------------
-      // VERIFY LOCAL STORAGE
-      // -----------------------------
-      console.log("=================================");
-      console.log("LOGIN SUCCESSFUL");
-      console.log(
-        "Token saved:",
-        !!localStorage.getItem("accessToken")
-      );
-      console.log(
-        "Role:",
-        localStorage.getItem("userRole")
-      );
-      console.log(
-        "User ID:",
-        localStorage.getItem("userId")
-      );
-      console.log(
-        "User Name:",
-        localStorage.getItem("userName")
-      );
-      console.log(
-        "User Email:",
-        localStorage.getItem("userEmail")
-      );
-      console.log("=================================");
-
-      // -----------------------------
-      // GO TO CITIZEN DASHBOARD
-      // -----------------------------
-      window.location.href = "/citizen-dashboard";
+      // Go to citizen dashboard
+      navigate("/citizen-dashboard");
 
     } catch (err) {
-      console.error("Citizen login error:", err);
-
       setError(
         err instanceof Error
           ? err.message
-          : "Unable to login. Please try again."
+          : "Something went wrong. Please try again."
       );
     } finally {
       setLoading(false);
@@ -182,113 +71,150 @@ function CitizenLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7faf7] flex items-center justify-center px-6">
-      <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-sm border border-gray-100">
+    <div className="min-h-screen bg-[#f7faf7] flex items-center justify-center px-4">
 
-        {/* LOGO */}
-        <div className="text-center">
+      <div className="w-full max-w-md">
 
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-green-100 text-3xl">
-            ♻️
-          </div>
-
-          <h1 className="mt-5 text-2xl font-bold text-gray-800">
-            Citizen Login
-          </h1>
-
-          <p className="mt-2 text-sm text-gray-500">
-            Login to report and track waste issues
-          </p>
-
-        </div>
-
-        {/* LOGIN FORM */}
-        <form
-          onSubmit={handleLogin}
-          className="mt-8 space-y-5"
+        {/* Back to Home */}
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-gray-600 mb-5 hover:text-green-700"
         >
+          <ArrowLeft size={18} />
+          Back to Home
+        </Link>
 
-          {/* EMAIL */}
-          <div>
+        {/* Login Card */}
+        <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-8">
 
-            <label className="text-sm font-semibold text-gray-700">
-              Email
-            </label>
+          {/* Header */}
+          <div className="text-center mb-7">
 
-            <input
-              type="email"
-              value={email}
-              onChange={(event) =>
-                setEmail(event.target.value)
-              }
-              placeholder="Enter your email"
-              autoComplete="email"
-              required
-              disabled={loading}
-              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-green-400 disabled:bg-gray-50"
-            />
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-green-100">
+              <User
+                size={30}
+                className="text-green-600"
+              />
+            </div>
 
-          </div>
+            <h1 className="mt-5 text-2xl font-bold text-gray-800">
+              Citizen Login
+            </h1>
 
-          {/* PASSWORD */}
-          <div>
-
-            <label className="text-sm font-semibold text-gray-700">
-              Password
-            </label>
-
-            <input
-              type="password"
-              value={password}
-              onChange={(event) =>
-                setPassword(event.target.value)
-              }
-              placeholder="Enter your password"
-              autoComplete="current-password"
-              required
-              disabled={loading}
-              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-green-400 disabled:bg-gray-50"
-            />
+            <p className="mt-2 text-sm text-gray-500">
+              Login to report and track waste issues
+            </p>
 
           </div>
 
-          {/* ERROR */}
+          {/* Error */}
           {error && (
-            <div className="rounded-xl border border-red-100 bg-red-50 p-3 text-sm text-red-700">
+            <div className="mb-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">
               {error}
             </div>
           )}
 
-          {/* LOGIN BUTTON */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-xl bg-green-600 py-3.5 font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+          {/* Login Form */}
+          <form
+            onSubmit={handleLogin}
+            className="space-y-5"
           >
-            {loading
-              ? "Logging in..."
-              : "Login as Citizen"}
-          </button>
 
-        </form>
+            {/* Email */}
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Email
+              </label>
 
-        {/* OFFICER LOGIN */}
-        <div className="mt-6 border-t border-gray-100 pt-5 text-center">
+              <div className="relative">
+
+                <Mail
+                  size={19}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                />
+
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  className="w-full rounded-xl border border-gray-200 py-3 pl-11 pr-4 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                />
+
+              </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Password
+              </label>
+
+              <div className="relative">
+
+                <Lock
+                  size={19}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                />
+
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  className="w-full rounded-xl border border-gray-200 py-3 pl-11 pr-4 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                />
+
+              </div>
+            </div>
+
+            {/* Login Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 py-3.5 font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <LogIn size={19} />
+
+              {loading
+                ? "Logging in..."
+                : "Login as Citizen"}
+            </button>
+
+          </form>
+
+          {/* New Citizen */}
+          <div className="mt-7 border-t border-gray-100 pt-6 text-center">
+
+            <p className="text-sm text-gray-500">
+              Don't have an account?
+            </p>
+
+            <Link
+              to="/citizen-register"
+              className="mt-2 inline-flex items-center gap-2 font-semibold text-green-600 hover:text-green-700 hover:underline"
+            >
+              <User size={17} />
+              Create New Citizen Account
+            </Link>
+
+          </div>
+
+        </div>
+
+        {/* Officer Login */}
+        <div className="mt-5 text-center">
 
           <p className="text-sm text-gray-500">
             Are you a municipal officer?
           </p>
 
-          <button
-            type="button"
-            onClick={() =>
-              navigate("/officer-login")
-            }
-            disabled={loading}
-            className="mt-2 font-semibold text-green-600 hover:text-green-700 disabled:opacity-50"
+          <Link
+            to="/officer-login"
+            className="mt-1 inline-block text-sm font-semibold text-orange-600 hover:text-orange-700 hover:underline"
           >
-            Officer Login
-          </button>
+            Municipal Officer Login
+          </Link>
 
         </div>
 
@@ -296,5 +222,3 @@ function CitizenLogin() {
     </div>
   );
 }
-
-export default CitizenLogin;

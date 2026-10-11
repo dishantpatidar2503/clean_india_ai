@@ -7,11 +7,14 @@ import {
   Routes,
 } from "react-router-dom";
 
-// Auth
+// ==================== AUTH ====================
 import CitizenLogin from "./pages/CitizenLogin";
-import OfficerLogin from "./pages/OfficerLogin";
+import CitizenRegister from "./pages/CitizenRegister";
 
-// Citizen
+import OfficerLogin from "./pages/OfficerLogin";
+import OfficerRegister from "./pages/OfficerRegister";
+
+// ==================== CITIZEN ====================
 import Dashboard from "./pages/Dashboard";
 import ReportDustbin from "./pages/ReportDustbin";
 import Tracking from "./pages/Tracking";
@@ -19,7 +22,7 @@ import Leaderboard from "./pages/Leaderboard";
 import Rewards from "./pages/Rewards";
 import Profile from "./pages/Profile";
 
-// Municipal
+// ==================== MUNICIPAL ====================
 import MunicipalDashboard from "./pages/municipal/MunicipalDashboard";
 import MunicipalReports from "./pages/municipal/MunicipalReports";
 import ReportDetails from "./pages/municipal/ReportDetails";
@@ -28,57 +31,58 @@ import Dustbins from "./pages/municipal/DustbinList";
 import MunicipalMap from "./pages/municipal/MunicipalMap";
 import Analytics from "./pages/municipal/Analytics";
 
-
-// =========================================================
-// HOME
-// =========================================================
-
+// ==================== HOME ====================
 function Home() {
   return (
-    <div className="min-h-screen bg-[#f7faf7] flex items-center justify-center px-6">
-      <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-sm border border-gray-100">
+    <div className="min-h-screen bg-green-50 flex items-center justify-center p-6">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 text-center">
 
-        <div className="text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-green-100 text-3xl">
-            ♻️
-          </div>
+        <h1 className="text-4xl font-bold text-green-700">
+          CleanCity AI
+        </h1>
 
-          <h1 className="mt-5 text-3xl font-bold text-gray-800">
-            CleanCity
-          </h1>
+        <p className="text-gray-600 mt-2 mb-8">
+          Smart Waste Management Platform
+        </p>
 
-          <p className="mt-2 text-sm text-gray-500">
-            Smart Waste Management System
-          </p>
-        </div>
-
-        <div className="mt-8 space-y-4">
+        <div className="space-y-4">
 
           <Link
             to="/citizen-login"
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-green-600 px-5 py-4 font-semibold text-white hover:bg-green-700"
+            className="block w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700"
           >
-            👤 Citizen Login
+            Citizen Login
+          </Link>
+
+          <Link
+            to="/citizen-register"
+            className="block w-full border border-green-600 text-green-700 py-3 rounded-lg font-semibold hover:bg-green-50"
+          >
+            Create Citizen Account
           </Link>
 
           <Link
             to="/officer-login"
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 px-5 py-4 font-semibold text-white hover:bg-orange-600"
+            className="block w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600"
           >
-            🏛️ Municipal Officer Login
+            Officer Login
+          </Link>
+
+          <Link
+            to="/officer-register"
+            className="block w-full border border-orange-500 text-orange-600 py-3 rounded-lg font-semibold hover:bg-orange-50"
+          >
+            Create Officer Account
           </Link>
 
         </div>
+
       </div>
     </div>
   );
 }
 
-
-// =========================================================
-// CITIZEN PROTECTED ROUTE
-// =========================================================
-
+// ==================== CITIZEN ROUTE ====================
 function CitizenRoute({
   children,
 }: {
@@ -88,22 +92,13 @@ function CitizenRoute({
   const role = localStorage.getItem("userRole");
 
   if (!token || role !== "CITIZEN") {
-    return (
-      <Navigate
-        to="/citizen-login"
-        replace
-      />
-    );
+    return <Navigate to="/citizen-login" replace />;
   }
 
   return <>{children}</>;
 }
 
-
-// =========================================================
-// MUNICIPAL PROTECTED ROUTE
-// =========================================================
-
+// ==================== MUNICIPAL ROUTE ====================
 function MunicipalRoute({
   children,
 }: {
@@ -113,37 +108,31 @@ function MunicipalRoute({
   const role = localStorage.getItem("userRole");
 
   if (!token || role !== "MUNICIPAL_OFFICER") {
-    return (
-      <Navigate
-        to="/officer-login"
-        replace
-      />
-    );
+    return <Navigate to="/officer-login" replace />;
   }
 
   return <>{children}</>;
 }
 
-
-// =========================================================
-// APP
-// =========================================================
-
+// ==================== APP ====================
 function App() {
   return (
     <BrowserRouter>
       <Routes>
 
-        {/* HOME */}
-        <Route
-          path="/"
-          element={<Home />}
-        />
+        {/* ================= HOME ================= */}
+        <Route path="/" element={<Home />} />
 
-        {/* LOGIN */}
+        {/* ================= AUTH ================= */}
+
         <Route
           path="/citizen-login"
           element={<CitizenLogin />}
+        />
+
+        <Route
+          path="/citizen-register"
+          element={<CitizenRegister />}
         />
 
         <Route
@@ -151,10 +140,12 @@ function App() {
           element={<OfficerLogin />}
         />
 
+        <Route
+          path="/officer-register"
+          element={<OfficerRegister />}
+        />
 
-        {/* =================================================
-            CITIZEN
-        ================================================= */}
+        {/* ================= CITIZEN ================= */}
 
         <Route
           path="/citizen-dashboard"
@@ -166,7 +157,7 @@ function App() {
         />
 
         <Route
-          path="/report"
+          path="/report-dustbin"
           element={
             <CitizenRoute>
               <ReportDustbin />
@@ -210,10 +201,7 @@ function App() {
           }
         />
 
-
-        {/* =================================================
-            MUNICIPAL
-        ================================================= */}
+        {/* ================= MUNICIPAL ================= */}
 
         <Route
           path="/municipal"
@@ -278,16 +266,11 @@ function App() {
           }
         />
 
+        {/* ================= FALLBACK ================= */}
 
-        {/* UNKNOWN */}
         <Route
           path="*"
-          element={
-            <Navigate
-              to="/"
-              replace
-            />
-          }
+          element={<Navigate to="/" replace />}
         />
 
       </Routes>

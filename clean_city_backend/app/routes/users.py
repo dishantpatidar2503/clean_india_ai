@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, Form, HTTPException
+
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.auth import create_access_token, hash_password, verify_password
 from app.database import get_db
-from app.models import User
+from app.models import User, MunicipalBody
 
 
 router = APIRouter(
@@ -125,6 +126,151 @@ def create_user(
         "email": user.email,
         "role": "CITIZEN",
         "total_points": user.total_points,
+    }
+
+
+# =========================================================
+# CREATE MUNICIPAL OFFICER
+# POST /users/create-officer
+# =========================================================
+
+@router.post("/create-officer", status_code=201)
+def create_officer(
+    name: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    municipal_id: int = Form(...),
+    db: Session = Depends(get_db),
+):
+    # Clean input
+    name = name.strip()
+    email = email.strip().lower()
+    password = password.strip()
+
+    # -----------------------------------------------------
+    # Validation
+    # -----------------------------------------------------
+
+    if not name:
+        raise HTTPException(
+            status_code=400,
+            detail="Name cannot be empty.",
+        )
+
+    if not email:
+        raise HTTPException(
+            status_code=400,
+            detail="Email cannot be empty.",
+        )
+
+    if "@" not in email:
+        raise HTTPException(
+            status_code=400,
+            detail="Please enter a valid email address.",
+        )
+
+    if len(password) < 6:
+        raise HTTPException(
+            status_code=400,
+            detail="Password must be at least 6 characters long.",
+        )
+
+    if municipal_id <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid municipal ID.",
+        )
+
+    # -----------------------------------------------------
+    # Check duplicate email
+    # -----------------------------------------------------
+
+    try:
+        existing_user = (
+            db.query(User)
+            .filter(User.email == email)
+            .first()
+        )
+    except SQLAlchemyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database read error: {str(e)}",
+        )
+
+    if existing_user:
+        raise HTTPException(
+            status_code=400,
+            detail="Email already registered.",
+        )
+
+    # -----------------------------------------------------
+    # Check municipal body
+    # -----------------------------------------------------
+
+    try:
+        municipal = (
+            db.query(MunicipalBody)
+            .filter(MunicipalBody.id == municipal_id)
+            .first()
+        )
+    except SQLAlchemyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database error while checking municipal body: {str(e)}",
+        )
+
+    if not municipal:
+        raise HTTPException(
+            status_code=404,
+            detail="Municipal body not found.",
+        )
+
+    # -----------------------------------------------------
+    # Hash password
+    # -----------------------------------------------------
+
+    try:
+        hashed_password = hash_password(password)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Password hashing error: {str(e)}",
+        )
+
+    # -----------------------------------------------------
+    # Create municipal officer
+    # -----------------------------------------------------
+
+    try:
+        officer = User(
+            name=name,
+            email=email,
+            password_hash=hashed_password,
+            is_municipal_officer=True,
+            municipal_id=municipal_id,
+            total_points=0,
+        )
+
+        db.add(officer)
+        db.commit()
+        db.refresh(officer)
+
+    except SQLAlchemyError as e:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database error while creating officer: {str(e)}",
+        )
+
+    return {
+        "message": "Municipal officer created successfully",
+        "id": officer.id,
+        "name": officer.name,
+        "email": officer.email,
+        "role": "MUNICIPAL_OFFICER",
+        "municipal_id": officer.municipal_id,
+        "municipal_name": municipal.name,
     }
 
 

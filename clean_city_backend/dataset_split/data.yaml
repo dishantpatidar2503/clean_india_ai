@@ -1,0 +1,6 @@
+train: D:/clean_city_ai/clean_city_backend/dataset_split/train/images
+val: D:/clean_city_ai/clean_city_backend/dataset_split/valid/images
+test: D:/clean_city_ai/clean_city_backend/dataset_split/test/images
+
+nc: 1
+names: ['Nilkamal-dustbin-detection']

@@ -1,16 +1,32 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routes.reports import router as reports_router
-from app.routes.users import router as user_router
+from app.database import Base, engine
 
+from app.routes import (
+    users,
+    reports,
+    dustbins,
+    leaderboard,
+    municipalities,
+    teams,
+)
+
+
+# ============================================================
+# FASTAPI APP
+# ============================================================
 
 app = FastAPI(
-    title="CleanCity AI Backend",
-    description="AI-Based Sensor-less Predictive Waste Management System",
+    title="CleanCity AI API",
+    description="AI-based smart dustbin reporting system",
     version="1.0.0",
 )
 
+
+# ============================================================
+# CORS
+# ============================================================
 
 app.add_middleware(
     CORSMiddleware,
@@ -24,19 +40,44 @@ app.add_middleware(
 )
 
 
-app.include_router(reports_router)
-app.include_router(user_router)
+# ============================================================
+# DATABASE
+# ============================================================
 
+Base.metadata.create_all(bind=engine)
+
+
+# ============================================================
+# ROUTES
+# ============================================================
+
+app.include_router(users.router)
+app.include_router(reports.router)
+app.include_router(dustbins.router)
+app.include_router(leaderboard.router)
+app.include_router(municipalities.router)
+app.include_router(teams.router)
+
+
+# ============================================================
+# ROOT
+# ============================================================
 
 @app.get("/")
 def root():
     return {
-        "message": "CleanCity AI Backend is running!"
+        "message": "CleanCity AI Backend is running",
+        "status": "OK",
     }
 
 
+# ============================================================
+# HEALTH CHECK
+# ============================================================
+
 @app.get("/health")
-def health():
+def health_check():
     return {
-        "status": "healthy"
+        "status": "healthy",
+        "service": "CleanCity AI Backend",
     }

@@ -11,7 +11,7 @@ export default function OfficerLogin() {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!email || !password) {
+    if (!email.trim() || !password) {
       alert("Please enter email and password.");
       return;
     }
@@ -21,7 +21,7 @@ export default function OfficerLogin() {
 
       const formData = new FormData();
 
-      formData.append("email", email);
+      formData.append("email", email.trim().toLowerCase());
       formData.append("password", password);
 
       const response = await fetch(
@@ -39,14 +39,42 @@ export default function OfficerLogin() {
         return;
       }
 
-      // Save officer login information
+      // Check backend response
+      if (!data.access_token || !data.user) {
+        alert("Invalid officer login response.");
+        return;
+      }
+
+      // Clear old citizen session
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("userRole");
+      localStorage.removeItem("municipalId");
+
+      // Save officer session
       localStorage.setItem("accessToken", data.access_token);
-      localStorage.setItem("userId", String(data.user_id));
-      localStorage.setItem("municipalId", String(data.municipal_id));
-      localStorage.setItem("userRole", "MUNICIPAL_OFFICER");
+      localStorage.setItem("userId", String(data.user.id));
+      localStorage.setItem(
+        "municipalId",
+        String(data.user.municipal_id)
+      );
+      localStorage.setItem(
+        "userRole",
+        data.user.role
+      );
+      localStorage.setItem(
+        "userName",
+        data.user.name
+      );
+      localStorage.setItem(
+        "userEmail",
+        data.user.email
+      );
 
       // Go to municipal dashboard
-      navigate("/municipal");
+      navigate("/municipal-dashboard", {
+        replace: true,
+      });
 
     } catch (error) {
       console.error("Officer login error:", error);
@@ -66,7 +94,6 @@ export default function OfficerLogin() {
 
         {/* Heading */}
         <div className="text-center mb-8">
-
           <h1 className="text-3xl font-bold text-green-700">
             Municipal Officer Login
           </h1>
@@ -74,7 +101,6 @@ export default function OfficerLogin() {
           <p className="text-gray-500 mt-2">
             Access CleanCity municipal dashboard
           </p>
-
         </div>
 
         {/* Login Form */}
@@ -116,7 +142,6 @@ export default function OfficerLogin() {
 
         {/* Register */}
         <div className="text-center mt-6">
-
           <span className="text-gray-500">
             New municipal officer?{" "}
           </span>
@@ -127,12 +152,10 @@ export default function OfficerLogin() {
           >
             Create Officer Account
           </Link>
-
         </div>
 
         {/* Citizen Login */}
         <div className="text-center mt-4">
-
           <span className="text-gray-500">
             Citizen?{" "}
           </span>
@@ -143,7 +166,6 @@ export default function OfficerLogin() {
           >
             Citizen Login
           </Link>
-
         </div>
 
       </div>

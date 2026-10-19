@@ -88,12 +88,14 @@ function Dashboard() {
     );
   }
 
+  // ---------------------------------------------------------
+  // Dashboard
+  // ---------------------------------------------------------
+
   return (
     <div className="min-h-screen bg-[#f7faf7]">
 
-      {/* =====================================================
-          HEADER
-      ===================================================== */}
+      {/* ================= HEADER ================= */}
 
       <header className="border-b border-gray-100 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
@@ -156,19 +158,15 @@ function Dashboard() {
             </button>
 
           </div>
+
         </div>
       </header>
 
-
-      {/* =====================================================
-          MAIN
-      ===================================================== */}
+      {/* ================= MAIN ================= */}
 
       <main className="mx-auto max-w-6xl px-6 py-8">
 
-        {/* ===================================================
-            WELCOME
-        =================================================== */}
+        {/* ================= WELCOME ================= */}
 
         <div>
 
@@ -193,10 +191,7 @@ function Dashboard() {
 
         </div>
 
-
-        {/* ===================================================
-            STATS
-        =================================================== */}
+        {/* ================= STATS ================= */}
 
         <div className="mt-7 grid gap-4 md:grid-cols-3">
 
@@ -243,7 +238,6 @@ function Dashboard() {
 
           </div>
 
-
           {/* Reports */}
           <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
 
@@ -271,7 +265,6 @@ function Dashboard() {
             </div>
 
           </div>
-
 
           {/* Points */}
           <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
@@ -303,10 +296,7 @@ function Dashboard() {
 
         </div>
 
-
-        {/* ===================================================
-            MAIN ACTIONS
-        =================================================== */}
+        {/* ================= MAIN ACTIONS ================= */}
 
         <div className="mt-7 grid gap-5 lg:grid-cols-3">
 
@@ -338,8 +328,9 @@ function Dashboard() {
 
             </div>
 
+            {/* IMPORTANT: Correct route */}
             <button
-              onClick={() => navigate("/report")}
+              onClick={() => navigate("/report-dustbin")}
               className="mt-6 flex items-center gap-2 rounded-xl bg-white px-5 py-3 font-semibold text-green-700 transition hover:bg-green-50"
             >
               Report a Dustbin
@@ -347,7 +338,6 @@ function Dashboard() {
             </button>
 
           </div>
-
 
           {/* Leaderboard */}
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
@@ -391,10 +381,7 @@ function Dashboard() {
 
         </div>
 
-
-        {/* ===================================================
-            QUICK LINKS
-        =================================================== */}
+        {/* ================= QUICK LINKS ================= */}
 
         <div className="mt-7 grid gap-4 sm:grid-cols-2">
 
@@ -414,7 +401,6 @@ function Dashboard() {
               </div>
 
               <div>
-
                 <h3 className="font-bold text-gray-800">
                   Rewards
                 </h3>
@@ -422,7 +408,6 @@ function Dashboard() {
                 <p className="mt-1 text-sm text-gray-500">
                   You have {userPoints} civic points
                 </p>
-
               </div>
 
             </div>
@@ -433,7 +418,6 @@ function Dashboard() {
             />
 
           </button>
-
 
           {/* Profile */}
           <button
@@ -451,7 +435,6 @@ function Dashboard() {
               </div>
 
               <div>
-
                 <h3 className="font-bold text-gray-800">
                   My Profile
                 </h3>
@@ -459,7 +442,6 @@ function Dashboard() {
                 <p className="mt-1 text-sm text-gray-500">
                   View your contribution history
                 </p>
-
               </div>
 
             </div>
@@ -473,17 +455,13 @@ function Dashboard() {
 
         </div>
 
-
-        {/* ===================================================
-            NEARBY ACTIVITY
-        =================================================== */}
+        {/* ================= NEARBY ACTIVITY ================= */}
 
         <div className="mt-7 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
 
           <div className="flex items-center justify-between">
 
             <div>
-
               <h3 className="font-bold text-gray-800">
                 Nearby Activity
               </h3>
@@ -491,7 +469,6 @@ function Dashboard() {
               <p className="mt-1 text-sm text-gray-500">
                 Recent civic activity around your area
               </p>
-
             </div>
 
             <MapPin
@@ -524,17 +501,13 @@ function Dashboard() {
 
         </div>
 
-
-        {/* ===================================================
-            RECENT REPORTS
-        =================================================== */}
+        {/* ================= RECENT REPORTS ================= */}
 
         <div className="mt-7 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
 
           <div className="flex items-center justify-between">
 
             <div>
-
               <h3 className="font-bold text-gray-800">
                 Recent Reports
               </h3>
@@ -542,7 +515,6 @@ function Dashboard() {
               <p className="mt-1 text-sm text-gray-500">
                 Your latest dustbin reports
               </p>
-
             </div>
 
             <FileText
@@ -551,7 +523,6 @@ function Dashboard() {
             />
 
           </div>
-
 
           <div className="mt-5 space-y-3">
 
@@ -568,7 +539,6 @@ function Dashboard() {
                 </div>
 
                 <div>
-
                   <p className="font-semibold text-gray-800">
                     Dustbin report
                   </p>
@@ -576,7 +546,6 @@ function Dashboard() {
                   <p className="text-xs text-gray-500">
                     Resolved · Report #CC-93D18D23
                   </p>
-
                 </div>
 
               </div>
@@ -586,7 +555,6 @@ function Dashboard() {
               </span>
 
             </div>
-
 
             {/* Report 2 */}
             <div className="flex items-center justify-between rounded-xl bg-orange-50 p-4">
@@ -601,7 +569,6 @@ function Dashboard() {
                 </div>
 
                 <div>
-
                   <p className="font-semibold text-gray-800">
                     Dustbin report
                   </p>
@@ -609,7 +576,6 @@ function Dashboard() {
                   <p className="text-xs text-gray-500">
                     Under review · Report #CC-72A41B19
                   </p>
-
                 </div>
 
               </div>

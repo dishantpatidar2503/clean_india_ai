@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Depends, Form, HTTPException
-
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.auth import create_access_token, hash_password, verify_password
 from app.database import get_db
-from app.models import User, MunicipalBody
+from app.models import User
 
 
 router = APIRouter(
@@ -26,13 +25,22 @@ def create_user(
     password: str = Form(...),
     db: Session = Depends(get_db),
 ):
-    # Clean input
-    name = name.strip()
-    email = email.strip().lower()
-    password = password.strip()
+    """
+    Create a new citizen account.
+    """
 
     # -----------------------------------------------------
-    # Validation
+    # CLEAN INPUT
+    # -----------------------------------------------------
+
+    name = name.strip()
+    email = email.strip().lower()
+
+    # Do NOT strip password.
+    # Password should be kept exactly as entered.
+    
+    # -----------------------------------------------------
+    # VALIDATION
     # -----------------------------------------------------
 
     if not name:
@@ -47,10 +55,16 @@ def create_user(
             detail="Email cannot be empty.",
         )
 
-    if "@" not in email:
+    if "@" not in email or "." not in email.split("@")[-1]:
         raise HTTPException(
             status_code=400,
             detail="Please enter a valid email address.",
+        )
+
+    if not password:
+        raise HTTPException(
+            status_code=400,
+            detail="Password cannot be empty.",
         )
 
     if len(password) < 6:
@@ -60,7 +74,7 @@ def create_user(
         )
 
     # -----------------------------------------------------
-    # Check duplicate email
+    # CHECK DUPLICATE EMAIL
     # -----------------------------------------------------
 
     try:
@@ -69,24 +83,28 @@ def create_user(
             .filter(User.email == email)
             .first()
         )
+
     except SQLAlchemyError as e:
+        db.rollback()
+
         raise HTTPException(
             status_code=500,
-            detail=f"Database read error: {str(e)}",
+            detail=f"Database error while checking email: {str(e)}",
         )
 
     if existing_user:
         raise HTTPException(
             status_code=400,
-            detail="Email already registered.",
+            detail="Email already registered. Please use another email.",
         )
 
     # -----------------------------------------------------
-    # Hash password
+    # HASH PASSWORD
     # -----------------------------------------------------
 
     try:
         hashed_password = hash_password(password)
+
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -94,10 +112,11 @@ def create_user(
         )
 
     # -----------------------------------------------------
-    # Create citizen
+    # CREATE CITIZEN
     # -----------------------------------------------------
 
     try:
+
         user = User(
             name=name,
             email=email,
@@ -112,12 +131,17 @@ def create_user(
         db.refresh(user)
 
     except SQLAlchemyError as e:
+
         db.rollback()
 
         raise HTTPException(
             status_code=500,
             detail=f"Database error while creating citizen: {str(e)}",
         )
+
+    # -----------------------------------------------------
+    # SUCCESS
+    # -----------------------------------------------------
 
     return {
         "message": "Citizen registered successfully",
@@ -126,151 +150,6 @@ def create_user(
         "email": user.email,
         "role": "CITIZEN",
         "total_points": user.total_points,
-    }
-
-
-# =========================================================
-# CREATE MUNICIPAL OFFICER
-# POST /users/create-officer
-# =========================================================
-
-@router.post("/create-officer", status_code=201)
-def create_officer(
-    name: str = Form(...),
-    email: str = Form(...),
-    password: str = Form(...),
-    municipal_id: int = Form(...),
-    db: Session = Depends(get_db),
-):
-    # Clean input
-    name = name.strip()
-    email = email.strip().lower()
-    password = password.strip()
-
-    # -----------------------------------------------------
-    # Validation
-    # -----------------------------------------------------
-
-    if not name:
-        raise HTTPException(
-            status_code=400,
-            detail="Name cannot be empty.",
-        )
-
-    if not email:
-        raise HTTPException(
-            status_code=400,
-            detail="Email cannot be empty.",
-        )
-
-    if "@" not in email:
-        raise HTTPException(
-            status_code=400,
-            detail="Please enter a valid email address.",
-        )
-
-    if len(password) < 6:
-        raise HTTPException(
-            status_code=400,
-            detail="Password must be at least 6 characters long.",
-        )
-
-    if municipal_id <= 0:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid municipal ID.",
-        )
-
-    # -----------------------------------------------------
-    # Check duplicate email
-    # -----------------------------------------------------
-
-    try:
-        existing_user = (
-            db.query(User)
-            .filter(User.email == email)
-            .first()
-        )
-    except SQLAlchemyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Database read error: {str(e)}",
-        )
-
-    if existing_user:
-        raise HTTPException(
-            status_code=400,
-            detail="Email already registered.",
-        )
-
-    # -----------------------------------------------------
-    # Check municipal body
-    # -----------------------------------------------------
-
-    try:
-        municipal = (
-            db.query(MunicipalBody)
-            .filter(MunicipalBody.id == municipal_id)
-            .first()
-        )
-    except SQLAlchemyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Database error while checking municipal body: {str(e)}",
-        )
-
-    if not municipal:
-        raise HTTPException(
-            status_code=404,
-            detail="Municipal body not found.",
-        )
-
-    # -----------------------------------------------------
-    # Hash password
-    # -----------------------------------------------------
-
-    try:
-        hashed_password = hash_password(password)
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Password hashing error: {str(e)}",
-        )
-
-    # -----------------------------------------------------
-    # Create municipal officer
-    # -----------------------------------------------------
-
-    try:
-        officer = User(
-            name=name,
-            email=email,
-            password_hash=hashed_password,
-            is_municipal_officer=True,
-            municipal_id=municipal_id,
-            total_points=0,
-        )
-
-        db.add(officer)
-        db.commit()
-        db.refresh(officer)
-
-    except SQLAlchemyError as e:
-        db.rollback()
-
-        raise HTTPException(
-            status_code=500,
-            detail=f"Database error while creating officer: {str(e)}",
-        )
-
-    return {
-        "message": "Municipal officer created successfully",
-        "id": officer.id,
-        "name": officer.name,
-        "email": officer.email,
-        "role": "MUNICIPAL_OFFICER",
-        "municipal_id": officer.municipal_id,
-        "municipal_name": municipal.name,
     }
 
 
@@ -288,7 +167,7 @@ def citizen_login(
     email = email.strip().lower()
 
     # -----------------------------------------------------
-    # Find user
+    # FIND USER
     # -----------------------------------------------------
 
     user = (
@@ -304,7 +183,7 @@ def citizen_login(
         )
 
     # -----------------------------------------------------
-    # Citizen check
+    # CITIZEN CHECK
     # -----------------------------------------------------
 
     if user.is_municipal_officer:
@@ -314,7 +193,7 @@ def citizen_login(
         )
 
     # -----------------------------------------------------
-    # Password check
+    # PASSWORD CHECK
     # -----------------------------------------------------
 
     if not user.password_hash:
@@ -328,6 +207,7 @@ def citizen_login(
             password,
             user.password_hash,
         )
+
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -341,7 +221,7 @@ def citizen_login(
         )
 
     # -----------------------------------------------------
-    # Create JWT
+    # CREATE JWT
     # -----------------------------------------------------
 
     token = create_access_token(
@@ -378,7 +258,7 @@ def officer_login(
     email = email.strip().lower()
 
     # -----------------------------------------------------
-    # Find user
+    # FIND USER
     # -----------------------------------------------------
 
     user = (
@@ -394,7 +274,7 @@ def officer_login(
         )
 
     # -----------------------------------------------------
-    # Officer check
+    # OFFICER CHECK
     # -----------------------------------------------------
 
     if not user.is_municipal_officer:
@@ -404,7 +284,7 @@ def officer_login(
         )
 
     # -----------------------------------------------------
-    # Password check
+    # PASSWORD CHECK
     # -----------------------------------------------------
 
     if not user.password_hash:
@@ -414,7 +294,7 @@ def officer_login(
         )
 
     # -----------------------------------------------------
-    # Municipality check
+    # MUNICIPALITY CHECK
     # -----------------------------------------------------
 
     if user.municipal_id is None:
@@ -428,6 +308,7 @@ def officer_login(
             password,
             user.password_hash,
         )
+
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -441,7 +322,7 @@ def officer_login(
         )
 
     # -----------------------------------------------------
-    # Create JWT
+    # CREATE JWT
     # -----------------------------------------------------
 
     token = create_access_token(

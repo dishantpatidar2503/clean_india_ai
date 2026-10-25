@@ -1,3 +1,6 @@
+
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -25,15 +28,24 @@ app = FastAPI(
 
 
 # ============================================================
-# CORS
+# CORS CONFIGURATION
 # ============================================================
+
+# Local React frontend
+allowed_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+# Production frontend URL from Render Environment
+FRONTEND_URL = os.getenv("FRONTEND_URL", "").strip().rstrip("/")
+
+if FRONTEND_URL and FRONTEND_URL not in allowed_origins:
+    allowed_origins.append(FRONTEND_URL)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

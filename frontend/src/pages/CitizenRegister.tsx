@@ -102,7 +102,7 @@ export default function CitizenRegister() {
       console.error("Registration error:", error);
 
       setError(
-        "Cannot connect to backend. Make sure FastAPI is running on port 8000."
+        "Cannot connect to the server. Please try again later."
       );
     } finally {
       setLoading(false);

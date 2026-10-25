@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
   CheckCircle2,
@@ -470,7 +470,7 @@ function MunicipalDashboard() {
                 </h1>
 
                 <p className="text-sm text-gray-500">
-                  Nagar Nigam · Waste Management Control Center
+                  Nagar Nigam Â· Waste Management Control Center
                 </p>
 
               </div>
@@ -925,7 +925,7 @@ function MunicipalDashboard() {
                                 value={team.id}
                               >
                                 {team.team_name}
-                                {" — "}
+                                {" â€” "}
                                 {team.area}
                               </option>
 

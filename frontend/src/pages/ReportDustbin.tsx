@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import type { ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -334,7 +334,7 @@ function ReportDustbin() {
             onClick={() => navigate(-1)}
             className="mb-4 text-sm font-medium text-green-700 hover:text-green-900"
           >
-            ← Back
+            â† Back
           </button>
 
           <h1 className="text-3xl font-bold text-gray-900">
@@ -366,7 +366,7 @@ function ReportDustbin() {
 
             {photo && (
               <p className="mt-2 text-sm text-green-700">
-                ✓ Photo selected: {photo.name}
+                âœ“ Photo selected: {photo.name}
               </p>
             )}
           </div>
@@ -385,7 +385,7 @@ function ReportDustbin() {
             >
               {gettingLocation
                 ? "Getting Location..."
-                : "📍 Capture Current Location"}
+                : "ðŸ“ Capture Current Location"}
             </button>
 
             {location && (
@@ -406,7 +406,7 @@ function ReportDustbin() {
           {/* Error */}
           {errorMessage && (
             <div className="mb-5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-              ❌ {errorMessage}
+              âŒ {errorMessage}
             </div>
           )}
 
@@ -418,14 +418,14 @@ function ReportDustbin() {
             className="w-full rounded-xl bg-green-700 px-6 py-4 font-bold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {submitting
-              ? "🤖 AI Verifying..."
+              ? "ðŸ¤– AI Verifying..."
               : "Submit Dustbin Report"}
           </button>
 
           {/* Info */}
           <div className="mt-5 rounded-lg bg-green-50 p-4 text-sm text-gray-700">
             <p className="font-semibold text-green-800">
-              🤖 AI Verification
+              ðŸ¤– AI Verification
             </p>
 
             <p className="mt-1">

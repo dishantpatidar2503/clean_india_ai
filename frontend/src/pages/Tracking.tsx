@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import {
   AlertCircle,
   Camera,
@@ -531,7 +531,7 @@ function Tracking() {
         <div className="mt-5 text-center">
 
           <p className="text-xs text-gray-400">
-            🔄 Status automatically updates every 5 seconds
+            ðŸ”„ Status automatically updates every 5 seconds
           </p>
 
         </div>

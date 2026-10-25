@@ -1,8 +1,12 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { API_BASE_URL } from "../config/api";
+<<<<<<< HEAD
+=======
+
+>>>>>>> d9547d3 (Connect frontend pages to Render backend)
 export default function CitizenRegister() {
   const navigate = useNavigate();
 

@@ -3,16 +3,40 @@ import os
 
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
-from sqlalchemy.engine import URL
+from sqlalchemy.engine import URL, make_url
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 load_dotenv()
 
-# Render PostgreSQL connection
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 
-# Local PostgreSQL fallback
-if not DATABASE_URL:
+if DATABASE_URL:
+    # Remove accidental surrounding quotes
+    DATABASE_URL = DATABASE_URL.strip('"').strip("'").strip()
+
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace(
+            "postgres://", "postgresql+psycopg://", 1
+        )
+    elif DATABASE_URL.startswith("postgresql://"):
+        DATABASE_URL = DATABASE_URL.replace(
+            "postgresql://", "postgresql+psycopg://", 1
+        )
+
+    if not DATABASE_URL.startswith("postgresql+psycopg://"):
+        raise RuntimeError(
+            "Invalid DATABASE_URL: expected PostgreSQL connection URL"
+        )
+
+    try:
+        DATABASE_URL = make_url(DATABASE_URL)
+    except Exception as exc:
+        raise RuntimeError(
+            "DATABASE_URL is malformed. Check Render Environment."
+        ) from exc
+
+else:
+    # Local PostgreSQL fallback
     DB_USER = os.getenv("DB_USER")
     DB_PASSWORD = os.getenv("DB_PASSWORD")
     DB_HOST = os.getenv("DB_HOST", "localhost")
@@ -30,17 +54,6 @@ if not DATABASE_URL:
         port=DB_PORT,
         database=DB_NAME,
     )
-
-# Support Render PostgreSQL URLs
-if isinstance(DATABASE_URL, str):
-    if DATABASE_URL.startswith("postgres://"):
-        DATABASE_URL = DATABASE_URL.replace(
-            "postgres://", "postgresql+psycopg://", 1
-        )
-    elif DATABASE_URL.startswith("postgresql://"):
-        DATABASE_URL = DATABASE_URL.replace(
-            "postgresql://", "postgresql+psycopg://", 1
-        )
 
 engine = create_engine(
     DATABASE_URL,

@@ -65,10 +65,22 @@ export default function CitizenRegister() {
       });
 
       // Try to read backend response
-      const data = await response.json();
+      const contentType = response.headers.get("content-type") || "";
 
-      console.log("Registration status:", response.status);
-      console.log("Registration response:", data);
+      if (!contentType.includes("application/json")) {
+      const responseText = await response.text();
+
+      console.error("Unexpected server response:", {
+      status: response.status,
+      url: response.url,
+      body: responseText.slice(0, 300),
+      });
+
+      setError(`Server returned ${response.status}. Please check the API URL.`);
+      return;
+      }
+
+const data = await response.json();
 
       // -------------------------
       // BACKEND ERROR
